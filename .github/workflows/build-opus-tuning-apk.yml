@@ -11,6 +11,8 @@ on:
   push:
     branches:
       - test/opus-tuning-apk
+    paths-ignore:
+      - .github/workflows/publish-test-apk.yml
 
 permissions:
   contents: read

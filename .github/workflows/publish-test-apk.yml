@@ -1,0 +1,38 @@
+name: Publish test APK as a draft release
+
+# Test build only. Copies the APK from a finished "Build test APK (Opus tuning + car hotspot)" run
+# into a draft release, which only people with write access to this fork can see.
+
+on:
+  push:
+    branches:
+      - test/opus-tuning-apk
+    paths:
+      - .github/workflows/publish-test-apk.yml
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  RUN_ID: '37890301912'
+  ARTIFACT: DiPlay-opus-tuning-apk-no-identity
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download the APK artifact
+        run: |
+          gh run download "$RUN_ID" -R "$GITHUB_REPOSITORY" -n "$ARTIFACT" -D out
+          ls -la out
+          sha256sum out/*.apk
+      - name: Create the draft release
+        run: |
+          sha=$(gh run view "$RUN_ID" -R "$GITHUB_REPOSITORY" --json headSha -q .headSha)
+          gh release create "test-opus-tuning-${sha:0:7}" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
+            --title "Test APK: Opus tuning + car hotspot (${sha:0:7})" \
+            --notes "Test build only, no accessory identity. Built by run $RUN_ID from ${sha}."
