@@ -577,6 +577,7 @@
     <string name="hotspot_control_on">Точку доступу авто ввімкнено.</string>
     <string name="hotspot_control_unsupported">Прошивка не підтримує автоматичне ввімкнення точки доступу. Відкрийте налаштування авто.</string>
     <string name="hotspot_control_timeout">Час очікування ввімкнення точки доступу минув. Відкрийте налаштування авто.</string>
+    <string name="car_hotspot_turn_on_and_return">Увімкніть точку доступу автомобіля й поверніться в DiPlay: підключення продовжиться само.</string>
     <string name="hotspot_control_failed">Не вдалося ввімкнути точку доступу. Відкрийте налаштування авто.</string>
     <string name="byd_adb_features">Функції BYD · потрібен ADB</string>
     <string name="diagnostic_report_saved_in_app">Звіт збережено приватно в DiPlay, оскільки загальнодоступне місце збереження недоступне. Поділіться ним або перегляньте його тут. Нічого не надсилається автоматично.</string>
@@ -701,4 +702,9 @@
     <string name="setup_badge_adb">Потрібен ADB через мережу</string>
     <string name="setup_done_title">Усе готово</string>
     <string name="setup_done_description">Під’єднайте iPhone зараз. Цей майстер можна знову відкрити в налаштуваннях.</string>
+    <string name="settings_car_hotspot_control">Точка доступу автомобіля</string>
+    <string name="settings_auto_car_hotspot_system_description">Вмикає збережену точку доступу під час відкриття DiPlay і перед бездротовим підключенням. Потрібен доступ Android «Зміна системних налаштувань»; ADB не потрібен. Щоб точка доступу з’являлася й після повного перезапуску, увімкніть відкриття DiPlay після запуску автомобіля. Точка доступу автоматично не вимикається.</string>
+    <string name="settings_write_settings_granted">Доступ «Зміна системних налаштувань»: дозволено</string>
+    <string name="settings_write_settings_missing">Доступ «Зміна системних налаштувань» ще не дозволено. Дозвольте його, щоб DiPlay міг вмикати точку доступу.</string>
+    <string name="settings_write_settings_allow">Дозволити доступ</string>
 </resources>

@@ -645,6 +645,7 @@
     <string name="hotspot_control_on">The car hotspot is on.</string>
     <string name="hotspot_control_unsupported">This firmware does not support automatic hotspot startup. Open the hotspot in car settings.</string>
     <string name="hotspot_control_timeout">Timed out waiting for the car hotspot. Open the hotspot in car settings.</string>
+    <string name="car_hotspot_turn_on_and_return">Turn on the car hotspot, then come back to DiPlay: the connection continues by itself.</string>
     <string name="hotspot_control_failed">The car could not start its hotspot. Open the hotspot in car settings.</string>
     <string name="byd_adb_features">BYD features · needs ADB</string>
     <string name="location_reporting_reconnects">Changing this setting reconnects an active CarPlay session.</string>
@@ -786,4 +787,9 @@
     <string name="setup_badge_adb">Needs ADB over network</string>
     <string name="setup_done_title">You’re ready</string>
     <string name="setup_done_description">Connect your iPhone now. You can open this guide again from Settings.</string>
+    <string name="settings_car_hotspot_control">Car hotspot</string>
+    <string name="settings_auto_car_hotspot_system_description">Turns on the saved car hotspot when DiPlay opens and before a wireless connection. DiPlay needs Android\'s “Modify system settings” access; ADB is not required. To have the hotspot after a full restart, also turn on opening DiPlay after the car starts. The hotspot is not turned off automatically.</string>
+    <string name="settings_write_settings_granted">“Modify system settings” access: allowed</string>
+    <string name="settings_write_settings_missing">“Modify system settings” access is not allowed yet. Allow it so DiPlay can turn on the hotspot.</string>
+    <string name="settings_write_settings_allow">Allow access</string>
 </resources>
