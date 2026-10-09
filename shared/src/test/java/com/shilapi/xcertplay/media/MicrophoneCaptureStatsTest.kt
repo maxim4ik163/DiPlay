@@ -46,6 +46,64 @@ class MicrophoneCaptureStatsTest {
         assertTrue(final.endsWith("ended=true"))
     }
 
+    @Test fun frameTimingIsReportedPerWindowAndSummarizedOncePerStream() {
+        var now = 0L
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config.copy(audioType = "speechrecognition"), reports::add) { now }
+        stats.threadPriority(requested = -19, actual = -19)
+        repeat(250) { index ->
+            stats.reading()
+            now += 20_000_000
+            stats.read(1920)
+            stats.frame(
+                encodeNs = if (index == 0) 25_000_000 else 1_000_000,
+                encodeCpuNs = 900_000,
+                workNs = if (index == 0) 26_000_000 else 1_500_000,
+            )
+            stats.flush()
+        }
+        assertEquals("Microphone: thread type=speechrecognition priority=-19 requested=-19", reports[0])
+        val window = reports[1]
+        assertTrue(window, window.contains("windowMs=5000 audioMs=5000 encodeAvgUs=1096 encodeMaxUs=25000 " +
+            "encodeCpuAvgUs=900 workMaxUs=26000 overBudget=1 ended=false"))
+
+        stats.flush(ended = true, details = "encoder=software complexity=3")
+        stats.flush(ended = true, details = "encoder=software complexity=3")
+        val summaries = reports.filter { it.startsWith("Microphone: summary ") }
+        assertEquals(1, summaries.size)
+        assertEquals("Microphone: summary type=speechrecognition source=VOICE_RECOGNITION codec=OPUS rate=48000 " +
+            "channels=1 frameMs=20 durationMs=5000 audioMs=5000 frames=250 encodeAvgUs=1096 encodeP95Us=1100 " +
+            "encodeMaxUs=25000 encodeCpuAvgUs=900 workAvgUs=1598 workP95Us=1600 workMaxUs=26000 overBudget=1 " +
+            "priority=-19 encoder=software complexity=3", summaries.single())
+        val finalWindow = reports.last { it.startsWith("Microphone: stats ") }
+        assertTrue(finalWindow, finalWindow.contains("encodeAvgUs=0 encodeMaxUs=0 encodeCpuAvgUs=unknown " +
+            "workMaxUs=0 overBudget=0 ended=true"))
+        assertTrue(reports.all { it.length < 512 && DiagnosticSafe.matches(it) })
+    }
+
+    @Test fun unknownThreadPriorityAndCpuTimeAreReportedAsUnknown() {
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config, reports::add) { 0 }
+        stats.threadPriority(requested = -16, actual = null)
+        stats.frame(encodeNs = 2_000_000, encodeCpuNs = -1, workNs = 3_000_000)
+        stats.flush(ended = true)
+        assertEquals("Microphone: thread type=telephony priority=unknown requested=-16", reports[0])
+        assertTrue(reports[1].contains("encodeCpuAvgUs=unknown"))
+        assertTrue(reports[2], reports[2].endsWith("overBudget=0 priority=unknown"))
+    }
+
+    @Test fun durationPercentilesUseBucketEdgesCappedAtTheMaximum() {
+        val histogram = DurationHistogram()
+        assertEquals(0, histogram.percentileMicros(95))
+        repeat(19) { histogram.add(250_000) }
+        histogram.add(80_000_000)
+        assertEquals(300, histogram.percentileMicros(95))
+        assertEquals(80_000, histogram.percentileMicros(100))
+        assertEquals(4_237, histogram.averageMicros())
+        val single = DurationHistogram().apply { add(1_234_000) }
+        assertEquals(1_234, single.percentileMicros(95))
+    }
+
     @Test fun reportingIsBoundedAndRouteQueriesRunOnlyWhenDue() {
         var now = 0L
         var reports = 0
@@ -118,5 +176,10 @@ class MicrophoneCaptureStatsTest {
         }
         assertEquals(4, reports.size)
         assertTrue(reports.all { it.length < 512 && '\n' !in it })
+    }
+
+    private object DiagnosticSafe {
+        private val unsafe = Regex("(?i)(token|pass|key=|head=|payload=|body=|hex=|name[=:])")
+        fun matches(line: String) = !unsafe.containsMatchIn(line)
     }
 }

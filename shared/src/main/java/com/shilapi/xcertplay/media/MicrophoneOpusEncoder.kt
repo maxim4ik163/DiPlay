@@ -7,6 +7,9 @@ internal interface MicrophoneOpusEncoder : Closeable {
     /** Short implementation name for diagnostic reports. */
     val implementation: String
 
+    /** Current tuning for diagnostic reports, such as `complexity=3`; empty when there is none to report. */
+    val details: String get() = ""
+
     val available: Boolean
 
     /** Encodes one 20 ms little-endian 16-bit PCM frame and returns the Opus access units it produced. */
