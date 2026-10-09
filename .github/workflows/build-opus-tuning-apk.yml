@@ -1,0 +1,101 @@
+name: Build test APK (Opus tuning + car hotspot)
+
+# Test build only. Builds one release APK from this branch: the software Opus microphone pull
+# request plus the car hotspot patches. The APK contains no accessory identity and is signed with a
+# throwaway key generated in the runner; add the runtime identity and re-sign it before installing.
+# The APK is attached to a draft release, which only people with write access to this fork see.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/opus-tuning-apk-2
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject credential files in public source
+        run: python3 scripts/check_public_tree.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Throwaway signing key
+        run: |
+          keytool -genkeypair -noprompt -keystore "$RUNNER_TEMP/ci.jks" -storepass ci-pass -keypass ci-pass \
+            -alias ci -keyalg RSA -keysize 2048 -validity 30 -dname "CN=DiPlay CI throwaway"
+          {
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/ci.jks"
+            echo "ANDROID_KEYSTORE_PASSWORD=ci-pass"
+            echo "ANDROID_KEY_ALIAS=ci"
+            echo "ANDROID_KEY_PASSWORD=ci-pass"
+          } >> "$GITHUB_ENV"
+          echo "SRC_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+      - name: Unit tests
+        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest --stacktrace
+      - name: Build release APK
+        run: |
+          ./gradlew :mobile:assembleRelease --stacktrace
+          mkdir -p out
+          cp mobile/build/outputs/apk/release/mobile-release.apk "out/DiPlay-${SRC_SHA}-opus-tuning-hotspot.apk"
+      - name: Attach the APK to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "test-opus-tuning-${SRC_SHA}" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
+            --title "Test APK: Opus tuning + car hotspot (${SRC_SHA})" \
+            --notes "Test build only, no accessory identity. Built from $(git rev-parse HEAD)."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DiPlay-opus-tuning-apk-no-identity
+          path: out/*.apk
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: apk-test-reports
+          path: |
+            shared/build/reports/tests/
+            common/build/reports/tests/
+          if-no-files-found: ignore
+
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Full CI command from AGENTS.md
+        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: check-reports
+          path: |
+            shared/build/reports/tests/
+            common/build/reports/tests/
+            mobile/build/reports/lint-results-debug.html
+            samples/home/build/reports/tests/
+            samples/home/build/reports/lint-results-debug.html
+            samples/maphost/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
