@@ -214,11 +214,17 @@ class AndroidMediaSink(
     private val vendorLowLatencyDecoder: Boolean = false,
     /** Opt-in MTK ACodec low-latency/no-reorder modes, with per-session automatic fallback. */
     private val mtkDecoderTuningEnabled: Boolean = false,
+    /** Warm up the software Opus microphone encoder in the background when the platform has none. */
+    prewarmMicrophoneEncoder: Boolean = false,
 ) : MediaSink {
     // Each downlink publishes its own reference; a mic must match that stream and sample rate.
     private val callEchoReferences = ConcurrentHashMap<AudioStreamId, EchoReference>()
     private val appContext = context?.applicationContext
     private val ambientSinkToken = AmbientMusicController.openSink(appContext)
+
+    init {
+        if (prewarmMicrophoneEncoder) SoftwareOpusWarmup.startOnce(onAudioDiagnostic)
+    }
     private val audioManager = appContext?.getSystemService(AudioManager::class.java)
     private val audioFocusCoordinator = AudioFocusCoordinator(
         appContext,
