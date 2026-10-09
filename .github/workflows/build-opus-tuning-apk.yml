@@ -1,4 +1,4 @@
-name: Build test APK (Opus tuning + car hotspot)
+name: Build test APK (Opus tuning + car hotspot + music buffer)
 
 # Test build only. Builds one release APK from this branch: the software Opus microphone pull
 # request plus the car hotspot patches. The APK contains no accessory identity and is signed with a
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - test/opus-tuning-apk-2
+      - test/opus-tuning-buffer-apk
 
 permissions:
   contents: read
@@ -49,13 +49,13 @@ jobs:
         run: |
           ./gradlew :mobile:assembleRelease --stacktrace
           mkdir -p out
-          cp mobile/build/outputs/apk/release/mobile-release.apk "out/DiPlay-${SRC_SHA}-opus-tuning-hotspot.apk"
+          cp mobile/build/outputs/apk/release/mobile-release.apk "out/DiPlay-${SRC_SHA}-opus-tuning-hotspot-buffer.apk"
       - name: Attach the APK to a draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "test-opus-tuning-${SRC_SHA}" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
-            --title "Test APK: Opus tuning + car hotspot (${SRC_SHA})" \
+          gh release create "test-opus-tuning-buffer-${SRC_SHA}" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
+            --title "Test APK: Opus tuning + car hotspot + music buffer (${SRC_SHA})" \
             --notes "Test build only, no accessory identity. Built from $(git rev-parse HEAD)."
       - uses: actions/upload-artifact@v4
         with:
