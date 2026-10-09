@@ -323,7 +323,7 @@
     <string name="s_30_fps_lighter_load">30 img/s · carga más ligera</string>
     <string name="s_3_connect">3 · Conéctate</string>
     <string name="s_3_tap_check_and_enable_below_this_enables_the_cluster_ma">3. Toca «Comprobar y activar» abajo. Esto activa el mapa del cuadro y el seguimiento automático del tema. Una sesión de CarPlay activa se reconectará una vez. Después puedes desconectar el ordenador.</string>
-    <string name="s_500_ms">500 ms</string>
+    <string name="settings_music_buffer_ms">%1$d ms</string>
     <string name="s_60_fps_smoother_motion">60 img/s · movimiento más suave</string>
     <string name="s_60_lightest_load" formatted="false">60% · carga más ligera</string>
     <string name="s_80_lighter_load" formatted="false">80% · carga más ligera</string>

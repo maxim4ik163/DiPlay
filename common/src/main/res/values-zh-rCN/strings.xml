@@ -334,7 +334,7 @@
     <string name="s_30_fps_lighter_load">30 帧/秒 · 减轻负载</string>
     <string name="s_3_connect">3 · 连接</string>
     <string name="s_3_tap_check_and_enable_below_this_enables_the_cluster_ma">3. 点击下方“检查并启用”。这将启用仪表盘地图和自动主题跟随。正在进行的 CarPlay 会话会重新连接一次，之后即可断开电脑。</string>
-    <string name="s_500_ms">500 毫秒</string>
+    <string name="settings_music_buffer_ms">%1$d 毫秒</string>
     <string name="s_5_ghz">5 GHz</string>
     <string name="s_60_fps_smoother_motion">60 帧/秒 · 更流畅</string>
     <string name="s_60_lightest_load" formatted="false">60% · 最低负载</string>
