@@ -592,6 +592,7 @@
     <string name="hotspot_control_on">車機熱點已開啟。</string>
     <string name="hotspot_control_unsupported">當前韌體不支援自動開啟熱點，請在車機設定中開啟。</string>
     <string name="hotspot_control_timeout">等待車機熱點開啟超時，請在車機設定中開啟。</string>
+    <string name="car_hotspot_turn_on_and_return">請開啟車輛熱點，然後返回 DiPlay：連線會自動繼續。</string>
     <string name="hotspot_control_failed">車機熱點開啟失敗，請在車機設定中開啟。</string>
     <string name="byd_adb_features">比亞迪功能 · 需要 ADB</string>
     <string name="location_reporting_reconnects">變更此設定會重新連線當前 CarPlay 會話。</string>
@@ -750,4 +751,9 @@
     <string name="setup_badge_adb">需要網路 ADB</string>
     <string name="setup_done_title">準備就緒</string>
     <string name="setup_done_description">現在連線你的 iPhone。之後可在設定中再次開啟本精靈。</string>
+    <string name="settings_car_hotspot_control">車輛熱點</string>
+    <string name="settings_auto_car_hotspot_system_description">開啟 DiPlay 時及無線連線前開啟已儲存的車輛熱點。DiPlay 需要 Android 的「修改系統設定」權限；不需要 ADB。若要在完全重新啟動後也有熱點，請同時開啟「車輛啟動後開啟 DiPlay」。熱點不會自動關閉。</string>
+    <string name="settings_write_settings_granted">「修改系統設定」權限：已允許</string>
+    <string name="settings_write_settings_missing">尚未允許「修改系統設定」權限。請允許，讓 DiPlay 能開啟熱點。</string>
+    <string name="settings_write_settings_allow">允許權限</string>
 </resources>
