@@ -2,6 +2,7 @@ package com.shilapi.xcertplay.media
 
 import org.concentus.OpusDecoder
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -36,6 +37,59 @@ class SoftwareOpusEncoderTest {
     }
 
     @Test
+    fun startsAtALowComplexityForHeadUnitCpus() {
+        val encoder = SoftwareOpusEncoder(bitrate = 48_000)
+        assertEquals(3, encoder.complexity)
+        assertEquals("complexity=3", encoder.details)
+        assertFalse(SoftwareOpusEncoder(bitrate = 48_000, complexity = 42).available)
+    }
+
+    @Test
+    fun slowSecondsLowerTheComplexityOneStepAtATimeDownToZero() {
+        val clock = FrameClock { 6_000_000 }
+        val lowered = mutableListOf<Pair<Int, Long>>()
+        val encoder = SoftwareOpusEncoder(
+            bitrate = 48_000,
+            complexity = 2,
+            onComplexityLowered = { complexity, average -> lowered += complexity to average },
+            nowNs = clock::now,
+        )
+        repeat(SoftwareOpusEncoder.WINDOW_FRAMES - 1) { encoder.encode(toneFrame(it)) }
+        assertEquals(2, encoder.complexity)
+        encoder.encode(toneFrame(0))
+        assertEquals(1, encoder.complexity)
+        repeat(SoftwareOpusEncoder.WINDOW_FRAMES * 3) { assertEquals(1, encoder.encode(toneFrame(it)).size) }
+        assertEquals(0, encoder.complexity)
+        assertEquals(listOf(1 to 6_000L, 0 to 6_000L), lowered)
+    }
+
+    @Test
+    fun repeatedSlowFramesLowerTheComplexityButFastSecondsKeepIt() {
+        var frame = 0
+        val clock = FrameClock { if (frame++ % SoftwareOpusEncoder.WINDOW_FRAMES < 3) 12_000_000 else 1_000_000 }
+        val encoder = SoftwareOpusEncoder(bitrate = 48_000, nowNs = clock::now)
+        repeat(SoftwareOpusEncoder.WINDOW_FRAMES) { encoder.encode(toneFrame(it)) }
+        assertEquals(2, encoder.complexity)
+
+        val fast = SoftwareOpusEncoder(bitrate = 48_000, nowNs = (FrameClock { 4_000_000 })::now)
+        repeat(SoftwareOpusEncoder.WINDOW_FRAMES * 4) { fast.encode(toneFrame(it)) }
+        assertEquals(SoftwareOpusEncoder.DEFAULT_COMPLEXITY, fast.complexity)
+    }
+
+    @Test
+    fun everyComplexityStillProducesDecodableSpeechPackets() {
+        val decoder = OpusDecoder(48_000, 1)
+        for (complexity in 0..10) {
+            val encoder = SoftwareOpusEncoder(bitrate = 32_000, complexity = complexity)
+            repeat(5) { index ->
+                val packet = encoder.encode(toneFrame(index)).single()
+                val pcm = ShortArray(SoftwareOpusEncoder.FRAME_SAMPLES)
+                assertEquals(SoftwareOpusEncoder.FRAME_SAMPLES, decoder.decode(packet, 0, packet.size, pcm, 0, pcm.size, false))
+            }
+        }
+    }
+
+    @Test
     fun platformEncoderIsPreferredAndSoftwareIsTheFallback() {
         val platform = FakeEncoder(available = true)
         assertSame(platform, MicrophoneOpusEncoders.create(48_000, platform = { platform }, software = { error("unused") }))
@@ -67,6 +121,17 @@ class SoftwareOpusEncoderTest {
         override fun encode(pcm: ByteArray): List<ByteArray> = emptyList()
         override fun close() {
             closed = true
+        }
+    }
+
+    /** Each encode reads the clock twice; the second read advances it by that frame's encode time. */
+    private class FrameClock(private val elapsedNs: () -> Long) {
+        private var nowNs = 0L
+        private var reads = 0
+
+        fun now(): Long {
+            if (reads++ % 2 == 1) nowNs += elapsedNs()
+            return nowNs
         }
     }
 }
