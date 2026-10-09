@@ -323,7 +323,7 @@
     <string name="s_30_fps_lighter_load">30 إطاراً/ث · حمل أخف</string>
     <string name="s_3_connect">3 · اتصل</string>
     <string name="s_3_tap_check_and_enable_below_this_enables_the_cluster_ma">3. اضغط «تحقق وفعّل» أدناه. يفعّل ذلك خريطة المجموعة واتباع السمة تلقائياً. ستعيد جلسة CarPlay النشطة الاتصال مرة واحدة. يمكنك بعد ذلك فصل الحاسوب.</string>
-    <string name="s_500_ms">500 مللي ثانية</string>
+    <string name="settings_music_buffer_ms">%1$d مللي ثانية</string>
     <string name="s_60_fps_smoother_motion">60 إطاراً/ث · حركة أكثر سلاسة</string>
     <string name="s_60_lightest_load" formatted="false">60% · أخف حمل</string>
     <string name="s_80_lighter_load" formatted="false">80% · حمل أخف</string>

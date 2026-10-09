@@ -323,7 +323,7 @@
     <string name="s_30_fps_lighter_load">30 кадров/с · меньшая нагрузка</string>
     <string name="s_3_connect">3 · Подключитесь</string>
     <string name="s_3_tap_check_and_enable_below_this_enables_the_cluster_ma">3. Нажмите «Проверить и включить» ниже. Это включит карту комбинации и автоматическое следование теме. Активный сеанс CarPlay переподключится один раз. После этого можно отключить компьютер.</string>
-    <string name="s_500_ms">500 мс</string>
+    <string name="settings_music_buffer_ms">%1$d мс</string>
     <string name="s_60_fps_smoother_motion">60 кадров/с · более плавное движение</string>
     <string name="s_60_lightest_load" formatted="false">60% · минимальная нагрузка</string>
     <string name="s_80_lighter_load" formatted="false">80% · меньшая нагрузка</string>
