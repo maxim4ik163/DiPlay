@@ -3955,6 +3955,7 @@ class CarPlayHostActivity : ComponentActivity() {
             // Only a SurfaceView honours release timestamps; smooth video always selects one.
             videoPacingDelayMillis = if (smoothVideo) smoothVideoDelayMillis(fps) else 0,
             mainVideoFrameRate = fps,
+            prewarmMicrophoneEncoder = microphoneAvailable,
         )
     }
 

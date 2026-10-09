@@ -5,6 +5,7 @@ Changes through DiPlay 0.2.15 are documented in [0.2.15 release notes](RELEASE-N
 ## Siri and calls
 
 - Wireless calls and Siri send the head unit's microphone on Android 7.1–9 head units. CarPlay sends both as Opus, and Android provides a MediaCodec Opus encoder only from Android 10, so the microphone stopped with `stage=ENCODER` and the other side heard nothing. DiPlay now falls back to a bundled software Opus encoder ([Concentus](https://github.com/lostromb/concentus)) when the platform has none; the diagnostic report names the encoder for each microphone stream. Accepted on a BOS Mini A1 head unit (Android 9, MediaTek) with an iPhone 12 on iOS 27. Related: [#415](https://github.com/shihabal3amri/DiPlay/issues/415)
+- Keep the software Opus microphone in real time on slow head units. It now encodes at complexity 3 instead of 5 on an audio-priority capture thread, lowers the complexity when a head unit cannot keep up, and warms up in the background when a session starts, so the first Siri request after launch is not cut short. On a BOS Mini A1 head unit (MediaTek, Android 9) a 20 ms frame took 4.1 ms of CPU at complexity 3 and 6.2 ms at complexity 5, and a cold encoder lost 1.2 s of the first Siri request. Diagnostic reports add microphone timing per 5 s window and a summary per stream.
 
 ## Connection setup and recovery
 

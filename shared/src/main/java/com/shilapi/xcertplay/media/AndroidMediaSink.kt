@@ -205,10 +205,16 @@ class AndroidMediaSink(
     private val videoPacingDelayMillis: Int = 0,
     /** The main screen's frame rate (the frame-rate setting), requested from its decoder as the operating rate; 0 for none. */
     private val mainVideoFrameRate: Int = 0,
+    /** Warm up the software Opus microphone encoder in the background when the platform has none. */
+    prewarmMicrophoneEncoder: Boolean = false,
 ) : MediaSink {
     // Each downlink publishes its own reference; a mic must match that stream and sample rate.
     private val callEchoReferences = ConcurrentHashMap<AudioStreamId, EchoReference>()
     private val appContext = context?.applicationContext
+
+    init {
+        if (prewarmMicrophoneEncoder) SoftwareOpusWarmup.startOnce(onAudioDiagnostic)
+    }
     private val audioManager = appContext?.getSystemService(AudioManager::class.java)
     private val audioFocusCoordinator = AudioFocusCoordinator(
         appContext,

@@ -29,7 +29,8 @@ object OpusEncoderSupport {
         }.getOrDefault(false)
     }
 
-    private fun platformAvailable(): Boolean =
+    /** Whether MediaCodec offers an Opus encoder; the bundled software encoder is not counted. */
+    internal fun platformAvailable(): Boolean =
         MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
             info.isEncoder && info.supportedTypes.any {
                 it.equals(MediaFormat.MIMETYPE_AUDIO_OPUS, ignoreCase = true)

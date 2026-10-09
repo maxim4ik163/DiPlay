@@ -8,7 +8,8 @@ import org.concentus.OpusSignal
  * Android has no MediaCodec Opus encoder. Kept free of Android types so it stays testable on the JVM.
  *
  * Head-unit CPUs are much slower than the machines the encoder was measured on, so it starts at a low
- * complexity and lowers it further when a second of frames shows that encoding cannot keep up.
+ * complexity and lowers it further when a second of frames shows that encoding cannot keep up. The first
+ * frames of every encoder are not judged: they include class loading and JIT warmup, not steady cost.
  */
 internal class SoftwareOpusEncoder(
     bitrate: Int,
@@ -39,6 +40,7 @@ internal class SoftwareOpusEncoder(
     private val samples = ShortArray(FRAME_SAMPLES)
     private val output = ByteArray(MAX_PACKET_BYTES)
     private var failures = 0
+    private var graceFrames = GRACE_FRAMES
     private var windowFrames = 0
     private var windowNs = 0L
     private var windowSlowFrames = 0
@@ -66,6 +68,10 @@ internal class SoftwareOpusEncoder(
 
     /** Lowers the complexity by one step after a window of slow frames. Never raises it again. */
     private fun observe(elapsedNs: Long) {
+        if (graceFrames > 0) {
+            graceFrames--
+            return
+        }
         val elapsed = elapsedNs.coerceAtLeast(0)
         windowFrames++
         windowNs += elapsed
@@ -107,6 +113,9 @@ internal class SoftwareOpusEncoder(
         /** One second of 20 ms frames. */
         const val WINDOW_FRAMES = 50
 
+        /** Two seconds of frames that never lower the complexity. */
+        const val GRACE_FRAMES = 100
+
         /** Encoding above a quarter of real time leaves too little for capture, echo cancellation and sending. */
         const val SLOW_AVERAGE_NS = 5_000_000L
 
@@ -116,5 +125,40 @@ internal class SoftwareOpusEncoder(
 
         private const val MAX_PACKET_BYTES = 1_275
         private const val MAX_REPORTED_FAILURES = 3
+
+        /** Siri arrives at 64 kbit/s and calls at 96 kbit/s; the encoder takes different paths for each. */
+        private val WARMUP_BITRATES = intArrayOf(64_000, 96_000)
+        private const val WARMUP_FRAMES_PER_BITRATE = 100
+
+        /**
+         * Encodes a few seconds of synthetic voiced speech at each uplink bitrate so that the classes
+         * are loaded and the hot methods compiled before a real stream needs them. Returns the number
+         * of frames that produced a packet.
+         */
+        fun warmUp(): Int {
+            val pcm = ByteArray(FRAME_BYTES)
+            var phase = 0.0
+            var encoded = 0
+            for (bitrate in WARMUP_BITRATES) {
+                val encoder = SoftwareOpusEncoder(bitrate)
+                try {
+                    for (frame in 0 until WARMUP_FRAMES_PER_BITRATE) {
+                        for (i in 0 until FRAME_SAMPLES) {
+                            val t = (frame * FRAME_SAMPLES + i) / SAMPLE_RATE.toDouble()
+                            phase += 2 * Math.PI * (140 + 50 * Math.sin(2 * Math.PI * 0.7 * t)) / SAMPLE_RATE
+                            var voiced = 0.0
+                            for (harmonic in 1..8) voiced += Math.sin(harmonic * phase) / harmonic
+                            val sample = (6_000 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 4 * t)) * voiced).toInt()
+                            pcm[2 * i] = sample.toByte()
+                            pcm[2 * i + 1] = (sample shr 8).toByte()
+                        }
+                        if (encoder.encode(pcm).isNotEmpty()) encoded++
+                    }
+                } finally {
+                    encoder.close()
+                }
+            }
+            return encoded
+        }
     }
 }
