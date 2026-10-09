@@ -337,7 +337,7 @@
     <string name="s_30_fps_lighter_load">30 fps · 負荷が軽い</string>
     <string name="s_3_connect">3 · 接続</string>
     <string name="s_3_tap_check_and_enable_below_this_enables_the_cluster_ma">3. 下の「確認して有効化」をタップします。メーター内地図とテーマの自動追従が有効になります。接続中のCarPlayは1回再接続します。</string>
-    <string name="s_500_ms">500 ms</string>
+    <string name="settings_music_buffer_ms">%1$d ms</string>
     <string name="s_5_ghz">5 GHz</string>
     <string name="s_60_fps_smoother_motion">60 fps · 動きが滑らか</string>
     <string name="s_60_lightest_load">60% · 最も軽い</string>

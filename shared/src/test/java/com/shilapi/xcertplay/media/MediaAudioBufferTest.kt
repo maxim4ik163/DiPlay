@@ -33,6 +33,27 @@ class MediaAudioBufferTest {
     }
 
     @Test
+    fun `presets step by 50 ms up to 200 ms, then by 100 ms up to 1000 ms`() {
+        assertEquals(listOf(50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000), MediaAudioBuffer.presets)
+        assertEquals(MediaAudioBuffer.DEFAULT_MILLIS, MediaAudioBuffer.presets[4])
+        assertEquals(MediaAudioBuffer.MOST_STABLE_MILLIS, MediaAudioBuffer.presets.last())
+    }
+
+    @Test
+    fun `delays saved by earlier versions stay selected`() {
+        for (millis in listOf(300, 500, 1000)) assertEquals(millis, MediaAudioBuffer.sanitize(millis))
+    }
+
+    @Test
+    fun `shortest music buffer still keeps the low-latency floor and headroom`() {
+        val plan = MediaAudioBuffer.plan(true, 48_000, 2, minBufferBytes = 7_680, mediaMillis = 50)
+        assertEquals(9_600, plan.startBytes)
+        assertEquals(48_000, plan.trackBufferBytes)
+        // A device minimum above the preset wins over it.
+        assertEquals(15_360, MediaAudioBuffer.plan(true, 48_000, 2, minBufferBytes = 15_360, mediaMillis = 50).startBytes)
+    }
+
+    @Test
     fun `unknown delay falls back to the default`() {
         assertEquals(MediaAudioBuffer.DEFAULT_MILLIS, MediaAudioBuffer.sanitize(250))
         assertEquals(57_600, MediaAudioBuffer.plan(true, 48_000, 2, 7_680, mediaMillis = 42).startBytes)
