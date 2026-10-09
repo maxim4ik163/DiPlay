@@ -345,6 +345,8 @@ internal class MicrophoneUplink(
         } finally {
             val details = if (encoder == null) "" else "encoder=${encoder.implementation} ${encoder.details}"
             stats.flush(ended = true, routeType = routeInfo, details = details)
+            // Test build only: measure every complexity on this head unit once the stream is over.
+            if (encoder?.implementation == "software") SoftwareOpusBench.runOnce(config.bitrate ?: 48_000, ::diagnostic)
             running.set(false)
             release()
         }
