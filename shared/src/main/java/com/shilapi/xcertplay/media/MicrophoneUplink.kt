@@ -6,6 +6,8 @@ import android.media.MediaRecorder
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.NoiseSuppressor
+import android.os.Debug
+import android.os.Process
 import android.util.Log
 import com.shilapi.xcertplay.airplay.AudioCodecKind
 import com.shilapi.xcertplay.airplay.MicrophoneConfig
@@ -38,7 +40,16 @@ internal class MicrophoneUplink(
         MicrophoneOpusEncoders.create(
             bitrate = bitrate,
             software = { value ->
-                SoftwareOpusEncoder(value, onError = { message, error -> Log.w(TAG, message, error) })
+                SoftwareOpusEncoder(
+                    value,
+                    onError = { message, error -> Log.w(TAG, message, error) },
+                    onComplexityLowered = { complexity, averageMicros ->
+                        val message = "Microphone: encoder type=${config.audioType} codec=OPUS " +
+                            "implementation=software complexity=$complexity lowered=true slowAvgUs=$averageMicros"
+                        Log.i(TAG, message)
+                        runCatching { onDiagnostic(message) }
+                    },
+                )
             },
         )
     },
@@ -100,10 +111,9 @@ internal class MicrophoneUplink(
             return false
         }
         if (nextEncoder != null) {
-            val message = "Microphone: encoder type=${config.audioType} codec=OPUS " +
-                "implementation=${nextEncoder.implementation}"
-            Log.i(TAG, message)
-            runCatching { onDiagnostic(message) }
+            diagnostic("Microphone: encoder type=${config.audioType} codec=OPUS " +
+                "implementation=${nextEncoder.implementation} bitrate=${config.bitrate ?: 48_000}" +
+                nextEncoder.details.let { if (it.isBlank()) "" else " $it" })
         }
         val bufferSize = maxOf(minBuffer * 2, config.frameBytes * 4)
         // Some head units throw on VOICE_RECOGNITION at build(); VOICE_COMMUNICATION works there.
@@ -158,6 +168,34 @@ internal class MicrophoneUplink(
             release()
             false
         }
+    }
+
+    private fun diagnostic(message: String) {
+        Log.i(TAG, message)
+        runCatching { onDiagnostic(message) }
+    }
+
+    /**
+     * Capture, echo cancellation and encoding share this thread, and a software Opus encoder needs a
+     * real share of a head-unit CPU. Preemption by ordinary work then shows up as choppy uplink audio.
+     */
+    private fun raiseCapturePriority() {
+        var requested = Process.THREAD_PRIORITY_URGENT_AUDIO
+        for (priority in intArrayOf(Process.THREAD_PRIORITY_URGENT_AUDIO, Process.THREAD_PRIORITY_AUDIO)) {
+            requested = priority
+            try {
+                Process.setThreadPriority(priority)
+                break
+            } catch (error: RuntimeException) {
+                Log.w(TAG, "microphone thread priority $priority refused", error)
+            }
+        }
+        val actual = try {
+            Process.getThreadPriority(Process.myTid())
+        } catch (_: RuntimeException) {
+            null
+        }
+        stats.threadPriority(requested, actual)
     }
 
     private fun createRecorder(source: Int, channelMask: Int, bufferSize: Int): AudioRecord? {
@@ -279,7 +317,10 @@ internal class MicrophoneUplink(
         val reference = canceller?.let { ShortArray(it.frameSamples) }
         var filled = 0
         var readRestarts = 0
+        // release() may clear the field while this thread is still finishing; keep it for the summary.
+        val encoder = opusEncoder
         try {
+            raiseCapturePriority()
             while (running.get()) {
                 stats.reading()
                 val count = recorder.read(readBuffer, 0, readBuffer.size, AudioRecord.READ_BLOCKING)
@@ -313,6 +354,7 @@ internal class MicrophoneUplink(
                     filled += copied
                     offset += copied
                     if (filled == frame.size) {
+                        val workStart = System.nanoTime()
                         if (canceller != null && clock != null && reference != null) {
                             // Ask slightly ahead of the frame so speaker latency the clock misses stays inside the tail.
                             echoReference?.read(reference, clock.frameEndNs(offset / 2) + ECHO_REFERENCE_LEAD_NS)
@@ -331,7 +373,7 @@ internal class MicrophoneUplink(
                             }
                         }
                         stats.level(frame)
-                        sendFrame(socket, counters, frame)
+                        sendFrame(socket, counters, frame, workStart)
                         filled = 0
                     }
                 }
@@ -343,7 +385,8 @@ internal class MicrophoneUplink(
                 stats.failure(MicrophoneFailureStage.CAPTURE, error)
             }
         } finally {
-            stats.flush(ended = true, routeType = routeInfo)
+            val details = if (encoder == null) "" else "encoder=${encoder.implementation} ${encoder.details}"
+            stats.flush(ended = true, routeType = routeInfo, details = details)
             running.set(false)
             release()
         }
@@ -358,12 +401,25 @@ internal class MicrophoneUplink(
         false
     }
 
-    private fun sendFrame(socket: DatagramSocket, counters: MicrophoneCounters, frame: ByteArray) {
+    private fun sendFrame(socket: DatagramSocket, counters: MicrophoneCounters, frame: ByteArray, workStart: Long) {
+        val encodeStart = System.nanoTime()
+        val cpuStart = threadCpuNanos()
         val bodies = if (config.codec == AudioCodecKind.OPUS) {
             opusEncoder?.encode(frame).orEmpty()
         } else {
             listOf(MicrophonePacketizer.toWirePcm(frame))
         }
+        val cpuEnd = threadCpuNanos()
+        val encodeNs = System.nanoTime() - encodeStart
+        try {
+            sendBodies(socket, counters, bodies)
+        } finally {
+            val encodeCpuNs = if (cpuStart >= 0 && cpuEnd >= cpuStart) cpuEnd - cpuStart else -1L
+            stats.frame(encodeNs, encodeCpuNs, System.nanoTime() - workStart)
+        }
+    }
+
+    private fun sendBodies(socket: DatagramSocket, counters: MicrophoneCounters, bodies: List<ByteArray>) {
         stats.encoded(bodies.size, if (bodies.isEmpty()) 1 else bodies.count { it.isEmpty() })
         bodies.forEach { body ->
             sendPacket(
@@ -395,6 +451,15 @@ internal class MicrophoneUplink(
             stats.sendFailed()
             if (running.get()) throw error
         }
+    }
+
+    /** This thread's CPU time, so a slow encoder can be told apart from a preempted one; -1 if unknown. */
+    private fun threadCpuNanos(): Long = try {
+        Debug.threadCpuTimeNanos()
+    } catch (_: RuntimeException) {
+        -1L
+    } catch (_: LinkageError) {
+        -1L
     }
 
     private fun routeType(recorder: AudioRecord): Int? = runCatching { recorder.routedDevice?.type }.getOrNull()
