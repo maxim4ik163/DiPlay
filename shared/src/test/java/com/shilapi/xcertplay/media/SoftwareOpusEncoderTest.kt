@@ -53,7 +53,7 @@ class SoftwareOpusEncoderTest {
             onComplexityLowered = { complexity, average -> lowered += complexity to average },
             nowNs = clock::now,
         )
-        repeat(SoftwareOpusEncoder.WINDOW_FRAMES - 1) { encoder.encode(toneFrame(it)) }
+        repeat(SoftwareOpusEncoder.GRACE_FRAMES + SoftwareOpusEncoder.WINDOW_FRAMES - 1) { encoder.encode(toneFrame(it)) }
         assertEquals(2, encoder.complexity)
         encoder.encode(toneFrame(0))
         assertEquals(1, encoder.complexity)
@@ -67,12 +67,26 @@ class SoftwareOpusEncoderTest {
         var frame = 0
         val clock = FrameClock { if (frame++ % SoftwareOpusEncoder.WINDOW_FRAMES < 3) 12_000_000 else 1_000_000 }
         val encoder = SoftwareOpusEncoder(bitrate = 48_000, nowNs = clock::now)
-        repeat(SoftwareOpusEncoder.WINDOW_FRAMES) { encoder.encode(toneFrame(it)) }
+        repeat(SoftwareOpusEncoder.GRACE_FRAMES + SoftwareOpusEncoder.WINDOW_FRAMES) { encoder.encode(toneFrame(it)) }
         assertEquals(2, encoder.complexity)
 
         val fast = SoftwareOpusEncoder(bitrate = 48_000, nowNs = (FrameClock { 4_000_000 })::now)
         repeat(SoftwareOpusEncoder.WINDOW_FRAMES * 4) { fast.encode(toneFrame(it)) }
         assertEquals(SoftwareOpusEncoder.DEFAULT_COMPLEXITY, fast.complexity)
+    }
+
+    @Test
+    fun warmupFramesNeverLowerTheComplexity() {
+        var frame = 0
+        val clock = FrameClock { if (frame++ < SoftwareOpusEncoder.GRACE_FRAMES) 35_000_000 else 1_000_000 }
+        val encoder = SoftwareOpusEncoder(bitrate = 48_000, nowNs = clock::now)
+        repeat(SoftwareOpusEncoder.GRACE_FRAMES + SoftwareOpusEncoder.WINDOW_FRAMES * 2) { encoder.encode(toneFrame(it)) }
+        assertEquals(SoftwareOpusEncoder.DEFAULT_COMPLEXITY, encoder.complexity)
+    }
+
+    @Test
+    fun warmupEncodesSpeechAtTheSiriAndCallBitrates() {
+        assertEquals(200, SoftwareOpusEncoder.warmUp())
     }
 
     @Test
