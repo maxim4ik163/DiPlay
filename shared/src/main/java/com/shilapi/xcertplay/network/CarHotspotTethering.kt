@@ -1,7 +1,6 @@
 package com.shilapi.xcertplay.network
 
 import android.content.Context
-import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.ResultReceiver
 import android.provider.Settings
@@ -37,14 +36,7 @@ object CarHotspotTethering {
         val deadline = System.nanoTime() + timeoutMillis * 1_000_000L
         val observedAdbState = AtomicReference<Boolean?>()
         val startReflection: (ResultReceiver) -> Unit = { receiver ->
-            val service = ConnectivityManager::class.java.getDeclaredField("mService")
-                .apply { isAccessible = true }
-                .get(context.getSystemService(ConnectivityManager::class.java))
-                ?: throw NoSuchMethodException("Connectivity service unavailable")
-            service.javaClass.getMethod(
-                "startTethering", Int::class.javaPrimitiveType, ResultReceiver::class.java,
-                Boolean::class.javaPrimitiveType, String::class.java,
-            ).invoke(service, 0, receiver, false, context.packageName)
+            PlatformTetheringStart.start(context, receiver, log)
         }
         val startAdb: () -> Boolean = {
             val client = AtomicReference<LocalAdb?>()

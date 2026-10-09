@@ -608,6 +608,7 @@
     <string name="hotspot_control_on">车机热点已开启。</string>
     <string name="hotspot_control_unsupported">当前固件不支持自动开启热点，请在车机设置中开启。</string>
     <string name="hotspot_control_timeout">等待车机热点开启超时，请在车机设置中开启。</string>
+    <string name="car_hotspot_turn_on_and_return">请开启车辆热点，然后返回 DiPlay：连接会自动继续。</string>
     <string name="hotspot_control_failed">车机热点开启失败，请在车机设置中开启。</string>
     <string name="byd_adb_features">比亚迪功能 · 需要 ADB</string>
     <string name="location_reporting_reconnects">更改此设置会重新连接当前 CarPlay 会话。</string>
@@ -749,4 +750,9 @@
     <string name="setup_badge_adb">需要网络 ADB</string>
     <string name="setup_done_title">准备就绪</string>
     <string name="setup_done_description">现在连接你的 iPhone。之后可在设置中再次打开本向导。</string>
+    <string name="settings_car_hotspot_control">车辆热点</string>
+    <string name="settings_auto_car_hotspot_system_description">打开 DiPlay 时及无线连接前开启已保存的车辆热点。DiPlay 需要 Android 的“修改系统设置”权限；无需 ADB。若要在完全重启后也有热点，请同时开启“车辆启动后打开 DiPlay”。热点不会自动关闭。</string>
+    <string name="settings_write_settings_granted">“修改系统设置”权限：已允许</string>
+    <string name="settings_write_settings_missing">尚未允许“修改系统设置”权限。请允许，以便 DiPlay 开启热点。</string>
+    <string name="settings_write_settings_allow">允许权限</string>
 </resources>

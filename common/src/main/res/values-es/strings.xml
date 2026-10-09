@@ -564,6 +564,7 @@
     <string name="hotspot_control_on">El punto de acceso del coche está activado.</string>
     <string name="hotspot_control_unsupported">El firmware no admite el inicio automático del punto de acceso. Actívalo en los ajustes del coche.</string>
     <string name="hotspot_control_timeout">Se agotó el tiempo de espera del punto de acceso. Actívalo en los ajustes del coche.</string>
+    <string name="car_hotspot_turn_on_and_return">Activa el punto de acceso del coche y vuelve a DiPlay: la conexión continuará sola.</string>
     <string name="hotspot_control_failed">No se pudo iniciar el punto de acceso. Actívalo en los ajustes del coche.</string>
     <string name="byd_adb_features">Funciones BYD · requieren ADB</string>
     <string name="location_reporting_reconnects">Cambiar este ajuste vuelve a conectar la sesión activa de CarPlay.</string>
@@ -689,4 +690,9 @@
     <string name="setup_badge_adb">Requiere ADB por red</string>
     <string name="setup_done_title">Todo listo</string>
     <string name="setup_done_description">Conecta tu iPhone ahora. Puedes volver a abrir esta guía desde Ajustes.</string>
+    <string name="settings_car_hotspot_control">Punto de acceso del coche</string>
+    <string name="settings_auto_car_hotspot_system_description">Activa el punto de acceso guardado del coche al abrir DiPlay y antes de una conexión inalámbrica. DiPlay necesita el acceso de Android «Modificar ajustes del sistema»; no se requiere ADB. Para tener el punto de acceso tras un reinicio completo, activa también abrir DiPlay al arrancar el coche. El punto de acceso no se desactiva automáticamente.</string>
+    <string name="settings_write_settings_granted">Acceso «Modificar ajustes del sistema»: permitido</string>
+    <string name="settings_write_settings_missing">El acceso «Modificar ajustes del sistema» aún no está permitido. Permítelo para que DiPlay pueda activar el punto de acceso.</string>
+    <string name="settings_write_settings_allow">Permitir acceso</string>
 </resources>

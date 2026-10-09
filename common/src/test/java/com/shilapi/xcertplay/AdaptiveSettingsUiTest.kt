@@ -307,7 +307,7 @@ class AdaptiveSettingsUiTest {
 
     @Test
     @Config(shadows = [HotspotSearchProbe::class])
-    fun hotspotSearchKeepsTheBydAndCarHotspotAudienceGates() {
+    fun hotspotSearchKeepsTheCarHotspotAudienceGateAndNeedsNoAdbOffBydUnits() {
         installBydSettingsPackage()
         AirPlayPersistence.saveWirelessHotspotMode(context, WirelessHotspotMode.EXISTING_WIFI)
         HotspotSearchProbe.workers.clear()
@@ -320,7 +320,8 @@ class AdaptiveSettingsUiTest {
         assertFalse(index().any { it.title == title })
         AirPlayPersistence.saveWirelessHotspotMode(context, WirelessHotspotMode.MANUAL)
         shadowOf(context.packageManager).removePackage("com.byd.carsettings")
-        assertFalse(index().any { it.title == title })
+        // Other head units get the switch through "Modify system settings" access instead of ADB.
+        assertEquals(SettingsCategory.CONNECTION, index().single { it.title == title }.category)
         assertTrue(HotspotSearchProbe.workers.isEmpty())
     }
 

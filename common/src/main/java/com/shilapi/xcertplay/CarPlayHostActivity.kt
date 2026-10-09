@@ -132,6 +132,9 @@ class CarPlayHostActivity : ComponentActivity() {
     private val startupRetryBudget = WirelessStartupRetryBudget()
     private var startupRetryStopped = false
     private var startupRetryButton: View? = null
+    // The car hotspot screen opens at most once per projection screen, so a driver who leaves it off is not looped.
+    private var carHotspotScreenOpened = false
+    private var retryAfterCarHotspotScreen = false
     private var startupFailureGeneration = -1
     private lateinit var airPlayIdentity: AirPlayIdentity
     private var languagePreferenceAtCreate = AppLocale.SYSTEM
@@ -892,6 +895,12 @@ class CarPlayHostActivity : ComponentActivity() {
                 scheduleDisplaySize(view.width, view.height)
             }
         }
+        if (retryAfterCarHotspotScreen) {
+            retryAfterCarHotspotScreen = false
+            val hotspotOn = com.shilapi.xcertplay.network.CarHotspotStatus.isEnabled(this)
+            appendLog("back from the car hotspot settings: hotspotOn=$hotspotOn")
+            if (hotspotOn != false && startupRetryStopped) retryStoppedStartup()
+        }
     }
 
 
@@ -1468,15 +1477,7 @@ class CarPlayHostActivity : ComponentActivity() {
             text = getString(R.string.retry_carplay_connection)
             isAllCaps = false
             visibility = View.GONE
-            setOnClickListener {
-                if (!CarPlayBackgroundSession.isOwner(this@CarPlayHostActivity) ||
-                    shuttingDown.get() || menuOpen || handshakeResetInProgress) return@setOnClickListener
-                startupRetryBudget.manualRetry()
-                startupRetryStopped = false
-                reconnectAttempts = 0
-                visibility = View.GONE
-                restartCarPlay(getString(R.string.connecting_to_your_iphone))
-            }
+            setOnClickListener { retryStoppedStartup() }
             startupRetryButton = this
         }
         panel.addView(retry, LinearLayout.LayoutParams(dp(300), dp(64)).apply { bottomMargin = dp(12) })
@@ -4537,6 +4538,29 @@ class CarPlayHostActivity : ComponentActivity() {
         startCarPlay(size)
     }
 
+    private fun retryStoppedStartup() {
+        if (!CarPlayBackgroundSession.isOwner(this) ||
+            shuttingDown.get() || menuOpen || handshakeResetInProgress) return
+        startupRetryBudget.manualRetry()
+        startupRetryStopped = false
+        reconnectAttempts = 0
+        startupRetryButton?.visibility = View.GONE
+        restartCarPlay(getString(R.string.connecting_to_your_iphone))
+    }
+
+    /**
+     * Wireless startup stopped because the car hotspot is off: open its system screen once, and retry
+     * when the driver comes back with the hotspot on.
+     */
+    private fun openCarHotspotScreenForStartup() {
+        if (carHotspotScreenOpened || !wirelessEnabled || wirelessHotspotMode != WirelessHotspotMode.MANUAL) return
+        if (com.shilapi.xcertplay.network.CarHotspotStatus.isEnabled(this) != false) return
+        carHotspotScreenOpened = true
+        appendLog("car hotspot is off; opening the car hotspot settings")
+        android.widget.Toast.makeText(this, getString(R.string.car_hotspot_turn_on_and_return), android.widget.Toast.LENGTH_LONG).show()
+        retryAfterCarHotspotScreen = CarHotspotScreens.open(this)
+    }
+
     private fun reconnectAfterLoss(reason: String, startupFailure: WirelessStartupFailure? = null) {
         if (!CarPlayBackgroundSession.isOwner(this)) return
         if (menuOpen) recoveryPendingAfterMenu = true
@@ -4550,6 +4574,7 @@ class CarPlayHostActivity : ComponentActivity() {
             setConnectionStage(if (startupFailure == WirelessStartupFailure.HOTSPOT_CONFIGURATION) reason
                 else "$reason\n${getString(R.string.wireless_startup_retries_exhausted)}")
             appendLog("wireless startup recovery stopped generation=$restartGeneration reason=$startupFailure retries=${startupRetryBudget.retries}")
+            if (startupFailure == WirelessStartupFailure.HOTSPOT_CONFIGURATION) openCarHotspotScreenForStartup()
             return
         }
         reconnectScheduled = true
