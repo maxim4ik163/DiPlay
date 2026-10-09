@@ -928,4 +928,9 @@
     <string name="settings_mfi_target_description">USB/CH341 は、CH341 認証アダプターを車載機に接続しているときだけ選択してください。接続していない場合は「ローカル／オフライン」を選択します。次回の接続から適用されます。</string>
     <string name="settings_call_speakerphone">通話をスピーカーで再生</string>
     <string name="settings_call_speakerphone_description">車載機として使う Android スマートフォンやタブレット向け：CarPlay の通話を受話口ではなくスピーカーで再生し、ハンズフリー用マイクを使います。車の車載機ではオフのままにしてください。次の通話から適用されます。</string>
+    <string name="settings_car_hotspot_control">車のホットスポット</string>
+    <string name="settings_auto_car_hotspot_system_description">DiPlay を開いたときとワイヤレス接続の前に、保存済みの車のホットスポットをオンにします。Android の「システム設定の変更」へのアクセスが必要です。ADB は不要です。完全に再起動した後もホットスポットを使うには、車の起動後に DiPlay を開く設定もオンにしてください。ホットスポットは自動ではオフになりません。</string>
+    <string name="settings_write_settings_granted">「システム設定の変更」へのアクセス: 許可済み</string>
+    <string name="settings_write_settings_missing">「システム設定の変更」へのアクセスがまだ許可されていません。DiPlay がホットスポットをオンにできるよう許可してください。</string>
+    <string name="settings_write_settings_allow">アクセスを許可</string>
 </resources>

@@ -826,4 +826,9 @@
     <string name="settings_mfi_target_description">Выбирайте USB/CH341, только если к головному устройству подключён адаптер аутентификации CH341. Без него выберите «Локальный офлайн». Применяется при следующем подключении.</string>
     <string name="settings_call_speakerphone">Звонки через громкоговоритель</string>
     <string name="settings_call_speakerphone_description">Для телефона или планшета Android, используемого как головное устройство: звонки CarPlay звучат из громкоговорителя, а не из разговорного динамика, и используется микрофон громкой связи. На головном устройстве автомобиля оставьте выключенным. Применяется со следующего звонка.</string>
+    <string name="settings_car_hotspot_control">Точка доступа автомобиля</string>
+    <string name="settings_auto_car_hotspot_system_description">Включает сохранённую точку доступа при открытии DiPlay и перед беспроводным подключением. Нужен доступ Android «Изменение системных настроек»; ADB не требуется. Чтобы точка доступа появлялась и после полного перезапуска, включите открытие DiPlay после запуска автомобиля. Точка доступа автоматически не выключается.</string>
+    <string name="settings_write_settings_granted">Доступ «Изменение системных настроек»: разрешён</string>
+    <string name="settings_write_settings_missing">Доступ «Изменение системных настроек» ещё не разрешён. Разрешите его, чтобы DiPlay мог включать точку доступа.</string>
+    <string name="settings_write_settings_allow">Разрешить доступ</string>
 </resources>

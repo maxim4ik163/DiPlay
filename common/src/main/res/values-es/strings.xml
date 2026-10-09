@@ -826,4 +826,9 @@
     <string name="settings_mfi_target_description">Elige USB/CH341 solo si hay un adaptador de autenticación CH341 conectado a la unidad principal. Sin él, elige Local sin conexión. Se aplica en la próxima conexión.</string>
     <string name="settings_call_speakerphone">Llamadas por el altavoz</string>
     <string name="settings_call_speakerphone_description">Para un teléfono o una tableta Android usados como unidad principal: reproduce las llamadas de CarPlay por su altavoz en lugar del auricular y usa su micrófono manos libres. Déjalo desactivado en la unidad principal de un coche. Se aplica desde la próxima llamada.</string>
+    <string name="settings_car_hotspot_control">Punto de acceso del coche</string>
+    <string name="settings_auto_car_hotspot_system_description">Activa el punto de acceso guardado del coche al abrir DiPlay y antes de una conexión inalámbrica. DiPlay necesita el acceso de Android «Modificar ajustes del sistema»; no se requiere ADB. Para tener el punto de acceso tras un reinicio completo, activa también abrir DiPlay al arrancar el coche. El punto de acceso no se desactiva automáticamente.</string>
+    <string name="settings_write_settings_granted">Acceso «Modificar ajustes del sistema»: permitido</string>
+    <string name="settings_write_settings_missing">El acceso «Modificar ajustes del sistema» aún no está permitido. Permítelo para que DiPlay pueda activar el punto de acceso.</string>
+    <string name="settings_write_settings_allow">Permitir acceso</string>
 </resources>

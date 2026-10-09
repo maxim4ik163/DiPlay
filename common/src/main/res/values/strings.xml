@@ -929,4 +929,9 @@
     <string name="settings_mfi_target_description">Choose USB/CH341 only while a CH341 authentication adapter is connected to the head unit. Without one, choose Local offline. Applies at the next connection.</string>
     <string name="settings_call_speakerphone">Calls on the loudspeaker</string>
     <string name="settings_call_speakerphone_description">For an Android phone or tablet used as the head unit: plays CarPlay calls on its loudspeaker instead of the earpiece and uses its hands-free microphone. Leave off on a car head unit. Applies from the next call.</string>
+    <string name="settings_car_hotspot_control">Car hotspot</string>
+    <string name="settings_auto_car_hotspot_system_description">Turns on the saved car hotspot when DiPlay opens and before a wireless connection. DiPlay needs Android\'s “Modify system settings” access; ADB is not required. To have the hotspot after a full restart, also turn on opening DiPlay after the car starts. The hotspot is not turned off automatically.</string>
+    <string name="settings_write_settings_granted">“Modify system settings” access: allowed</string>
+    <string name="settings_write_settings_missing">“Modify system settings” access is not allowed yet. Allow it so DiPlay can turn on the hotspot.</string>
+    <string name="settings_write_settings_allow">Allow access</string>
 </resources>

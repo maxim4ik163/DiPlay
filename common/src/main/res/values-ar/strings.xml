@@ -875,4 +875,9 @@
     <string name="settings_mfi_target_description">اختر USB/CH341 فقط عندما يكون محوّل مصادقة CH341 متصلًا بوحدة الوسائط. بدونه، اختر «محلي دون اتصال». يُطبَّق عند الاتصال التالي.</string>
     <string name="settings_call_speakerphone">المكالمات عبر مكبّر الصوت</string>
     <string name="settings_call_speakerphone_description">لهاتف أو جهاز لوحي بنظام Android يُستخدم كوحدة وسائط: يشغّل مكالمات CarPlay عبر مكبّر الصوت بدلًا من سمّاعة الأذن ويستخدم ميكروفون التحدث الحر. اتركه متوقفًا في وحدة وسائط السيارة. يُطبَّق من المكالمة التالية.</string>
+    <string name="settings_car_hotspot_control">نقطة اتصال السيارة</string>
+    <string name="settings_auto_car_hotspot_system_description">يشغّل نقطة اتصال السيارة المحفوظة عند فتح DiPlay وقبل الاتصال اللاسلكي. يحتاج DiPlay إلى إذن Android «تعديل إعدادات النظام»؛ لا يلزم ADB. لتتوفر نقطة الاتصال بعد إعادة التشغيل الكاملة، فعّل أيضًا فتح DiPlay بعد تشغيل السيارة. لا يتم إيقاف نقطة الاتصال تلقائيًا.</string>
+    <string name="settings_write_settings_granted">إذن «تعديل إعدادات النظام»: مسموح</string>
+    <string name="settings_write_settings_missing">إذن «تعديل إعدادات النظام» غير مسموح بعد. اسمح به ليتمكن DiPlay من تشغيل نقطة الاتصال.</string>
+    <string name="settings_write_settings_allow">السماح بالإذن</string>
 </resources>
