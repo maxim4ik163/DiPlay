@@ -1,0 +1,55 @@
+name: Flaky unit test check
+
+# Test only. Runs the shared and common unit tests three times on the Opus realtime branch and on the
+# upstream main it is based on, and publishes any failing tests to a draft release.
+
+on:
+  push:
+    branches:
+      - test/flaky-check
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [ours, upstream]
+        attempt: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.variant == 'ours' && 'maxim4ik163/DiPlay' || 'shihabal3amri/DiPlay' }}
+          ref: ${{ matrix.variant == 'ours' && 'a667b9afad348a92b0d62a195980dee30602a2d2' || '292b2dd7d05166e714eddc2fc245fe1d5cbf48b5' }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests
+        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest --continue --stacktrace
+      - name: Publish failing tests to a draft release
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY' > failures.txt
+          import glob, xml.etree.ElementTree as ET
+          for path in sorted(glob.glob('**/build/test-results/**/*.xml', recursive=True)):
+              for case in ET.parse(path).getroot().iter('testcase'):
+                  for kind in ('failure', 'error'):
+                      node = case.find(kind)
+                      if node is not None:
+                          print('=== %s.%s (%s)' % (case.get('classname'), case.get('name'), kind))
+                          print((node.text or node.get('message') or '')[:6000])
+          PY
+          gh release create "flaky-${{ matrix.variant }}-${{ matrix.attempt }}-${GITHUB_RUN_ID}" failures.txt \
+            -R maxim4ik163/DiPlay --draft --title "Flaky check ${{ matrix.variant }} ${{ matrix.attempt }}" \
+            --notes "Failing unit tests from run ${GITHUB_RUN_ID}."
