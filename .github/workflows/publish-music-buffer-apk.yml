@@ -1,0 +1,38 @@
+name: Publish music buffer test APK as a draft release
+
+# Test build only. Copies the APK from the finished "Build test APK" run on music-buffer-presets
+# into a draft release, which only people with write access to this fork can see.
+
+on:
+  push:
+    branches:
+      - test/music-buffer-apk
+    paths:
+      - .github/workflows/publish-music-buffer-apk.yml
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  RUN_ID: '37918954316'
+  ARTIFACT: DiPlay-test-apk-no-identity
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download the APK artifact
+        run: |
+          gh run download "$RUN_ID" -R "$GITHUB_REPOSITORY" -n "$ARTIFACT" -D out
+          ls -la out
+          sha256sum out/*.apk
+      - name: Create the draft release
+        run: |
+          sha=$(gh run view "$RUN_ID" -R "$GITHUB_REPOSITORY" --json headSha -q .headSha)
+          gh release create "test-music-buffer-${sha:0:7}" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
+            --title "Test APK: Opus mic + car hotspot + music buffer (${sha:0:7})" \
+            --notes "Test build only, no accessory identity. Built by run $RUN_ID from ${sha}."
