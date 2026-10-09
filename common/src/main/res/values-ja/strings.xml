@@ -924,4 +924,10 @@
     <string name="connection_help_existing_wifi">車載端末とiPhoneが同じWi-Fiネットワークに接続され、その名前とパスワードがDiPlayの設定と一致しているか確認して、再試行してください。</string>
     <string name="settings_report_on_phone">スマートフォンでレポートを取得</string>
     <string name="settings_report_on_phone_hint">スマートフォンのカメラでQRコードを読み取って、ブラウザーでページを開き、「レポートをダウンロード」を選んでください。ダウンロードが終わるまでこの画面を開いたままにしてください。</string>
+    <string name="car_hotspot_turn_on_and_return">車のホットスポットをオンにして DiPlay に戻ってください。接続は自動で続きます。</string>
+    <string name="settings_car_hotspot_control">車のホットスポット</string>
+    <string name="settings_auto_car_hotspot_system_description">DiPlay を開いたときとワイヤレス接続の前に、保存済みの車のホットスポットをオンにします。Android の「システム設定の変更」へのアクセスが必要です。ADB は不要です。完全に再起動した後もホットスポットを使うには、車の起動後に DiPlay を開く設定もオンにしてください。ホットスポットは自動ではオフになりません。</string>
+    <string name="settings_write_settings_granted">「システム設定の変更」へのアクセス: 許可済み</string>
+    <string name="settings_write_settings_missing">「システム設定の変更」へのアクセスがまだ許可されていません。DiPlay がホットスポットをオンにできるよう許可してください。</string>
+    <string name="settings_write_settings_allow">アクセスを許可</string>
 </resources>
