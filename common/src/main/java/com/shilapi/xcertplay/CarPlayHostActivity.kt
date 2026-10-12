@@ -1492,17 +1492,26 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         panel.addView(gestureHint)
         paintWaitingScreen = {
-            val colors = WaitingScreenColors.of(darkMode)
+            // DiPlay chrome follows the app appearance; darkMode is only the day/night signal sent to CarPlay.
+            val colors = WaitingScreenColors.of(appNight)
             viewport.setBackgroundColor(colors.background)
             title.setTextColor(colors.text)
             stage.setTextColor(colors.text)
             instructions.setTextColor(colors.secondary)
             gestureHint.setTextColor(colors.secondary)
-            val buttonPalette = DiPlayPalette.of(darkMode)
+            val buttonPalette = DiPlayPalette.of(appNight)
             back.setTextColor(buttonPalette.onAccent)
             back.background = GradientDrawable().apply {
                 setColor(buttonPalette.accent)
                 cornerRadius = dp(20).toFloat()
+            }
+            for (button in listOf(recovery, retry)) {
+                button.setTextColor(buttonPalette.primaryText)
+                button.background = GradientDrawable().apply {
+                    setColor(buttonPalette.button)
+                    setStroke(dp(1), buttonPalette.outline)
+                    cornerRadius = dp(20).toFloat()
+                }
             }
         }
         paintWaitingScreen()
@@ -1676,6 +1685,7 @@ class CarPlayHostActivity : ComponentActivity() {
         val nextNight = resolveAppNightNow(darkMode)
         if (nextNight == appNight) return
         appNight = nextNight
+        paintWaitingScreen()
 
         settingsMenu?.let { previous ->
             val parent = previous.parent as? ViewGroup ?: return@let
