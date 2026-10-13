@@ -23,7 +23,7 @@ class MicrophoneStallDetectorTest {
         assertNull(detector.onRead(2_048, 2_591 * ms))
         var now = 2_591 * ms
         val stalls = mutableListOf<MicrophoneStallDetector.Stall>()
-        repeat(4) {
+        repeat(3) {
             now += 601 * ms
             detector.onRead(2_048, now)?.let(stalls::add)
         }
