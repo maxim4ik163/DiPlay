@@ -1729,7 +1729,6 @@ private class AudioRenderer(
     private var droppedPacketsLogged = false
     private var firstAacPayloadLogged = false
     private var firstOpusShortPacketLogged = false
-    private var opusSilence = ByteArray(0)
     private var firstInputQueuedLogged = false
     private var inputQueued = 0
     private var inputDropped = 0
@@ -2148,19 +2147,8 @@ private class AudioRenderer(
                         firstOpusShortPacketLogged = true
                         Log.i(
                             TAG,
-                            "audio Opus short packet bytes=${accessUnit.size}; playing it as silence",
+                            "audio Opus skipping short packet bytes=${accessUnit.size}",
                         )
-                    }
-                    // The iPhone sends these silence (DTX) packets while the far end is quiet. Skipping
-                    // them left the track empty for each one, so it underran dozens of times every few
-                    // seconds of a call and the voice crackled when speech resumed. Play their duration
-                    // as silence, after the decoder's earlier output so the order stays the same.
-                    codec?.let { drainCodec(it) }
-                    val bytes = OpusPacketDuration.silenceBytes(accessUnit, format.sampleRate, format.channels)
-                    if (bytes > 0) {
-                        if (opusSilence.size < bytes) opusSilence = ByteArray(bytes)
-                        java.util.Arrays.fill(opusSilence, 0, bytes, 0)
-                        writePcm(opusSilence, 0, bytes)
                     }
                     return
                 }
