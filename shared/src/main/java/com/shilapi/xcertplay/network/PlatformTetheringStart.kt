@@ -115,6 +115,17 @@ internal object PlatformTetheringStart {
         }.onFailure { failures += "ServiceManager connectivity: ${describe(it)}" }.getOrNull()
     }
 
+    /**
+     * Signature prefixes exempted from the hidden API checks: only the members this call uses. The
+     * first prefix also covers IConnectivityManager.Stub and its Proxy. An exemption lasts for the
+     * process's life and DiPlay's process also runs CarPlay, so nothing else may be exempted.
+     */
+    internal val HIDDEN_API_EXEMPTIONS = arrayOf(
+        "Landroid/net/IConnectivityManager",
+        "Landroid/net/ConnectivityManager;->mService",
+        "Landroid/os/ServiceManager;",
+    )
+
     /** Meta-reflection reaches VMRuntime.setHiddenApiExemptions on Android 9 and 10 only. */
     private fun exemptHiddenApis(): Boolean = runCatching {
         val forName = Class::class.java.getDeclaredMethod("forName", String::class.java)
@@ -124,7 +135,7 @@ internal object PlatformTetheringStart {
         val getRuntime = getDeclaredMethod.invoke(vmRuntime, "getRuntime", null) as Method
         val setExemptions = getDeclaredMethod.invoke(
             vmRuntime, "setHiddenApiExemptions", arrayOf<Class<*>>(Array<String>::class.java)) as Method
-        setExemptions.invoke(getRuntime.invoke(null), arrayOf("L"))
+        setExemptions.invoke(getRuntime.invoke(null), HIDDEN_API_EXEMPTIONS)
         true
     }.getOrDefault(false)
 
