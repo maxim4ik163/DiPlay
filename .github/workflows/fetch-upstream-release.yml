@@ -19,9 +19,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag=$(gh release view -R shihabal3amri/DiPlay --json tagName -q .tagName)
-          gh release view "$tag" -R shihabal3amri/DiPlay --json assets -q '.assets[].name'
-          mkdir out && gh release download "$tag" -R shihabal3amri/DiPlay -p '*.apk' -D out
-          ls -la out
+          set -o pipefail
+          tag=v0.2.19
+          gh release view "$tag" -R shihabal3amri/DiPlay --json assets -q '.assets[].name' 2>&1 | while read -r l; do echo "::warning::asset $l"; done
+          mkdir out
+          gh release download "$tag" -R shihabal3amri/DiPlay -p '*.apk' -D out 2>&1 | while read -r l; do echo "::warning::$l"; done
+          ls out | while read -r l; do echo "::warning::downloaded $l"; done
           gh release create "upstream-$tag" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
-            --title "Upstream release APK $tag (for identity files)" --notes "Copy of the official $tag APK."
+            --title "Upstream release APK $tag (for identity files)" --notes "Copy of the official $tag APK." 2>&1 | while read -r l; do echo "::warning::$l"; done
