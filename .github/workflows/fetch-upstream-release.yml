@@ -1,0 +1,27 @@
+name: Fetch upstream release APK
+
+# Test build only: copies the official DiPlay release APK into a draft release of this fork,
+# so its accessory identity files can be added to test builds.
+
+on:
+  push:
+    branches:
+      - test/fetch-release
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy the latest upstream release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view -R shihabal3amri/DiPlay --json tagName -q .tagName)
+          gh release view "$tag" -R shihabal3amri/DiPlay --json assets -q '.assets[].name'
+          mkdir out && gh release download "$tag" -R shihabal3amri/DiPlay -p '*.apk' -D out
+          ls -la out
+          gh release create "upstream-$tag" out/*.apk -R "$GITHUB_REPOSITORY" --draft \
+            --title "Upstream release APK $tag (for identity files)" --notes "Copy of the official $tag APK."
