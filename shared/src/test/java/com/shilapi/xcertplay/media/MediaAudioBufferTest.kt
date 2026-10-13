@@ -33,15 +33,27 @@ class MediaAudioBufferTest {
     }
 
     @Test
-    fun `presets step by 50 ms up to 200 ms, then by 100 ms up to 1000 ms`() {
-        assertEquals(listOf(50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000), MediaAudioBuffer.presets)
-        assertEquals(MediaAudioBuffer.DEFAULT_MILLIS, MediaAudioBuffer.presets[4])
-        assertEquals(MediaAudioBuffer.MOST_STABLE_MILLIS, MediaAudioBuffer.presets.last())
+    fun `wired presets step by 50 ms up to 200 ms, then by 100 ms up to 1000 ms`() {
+        assertEquals(listOf(50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000), MediaAudioBuffer.wiredPresets)
+        assertEquals(MediaAudioBuffer.DEFAULT_MILLIS, MediaAudioBuffer.wiredPresets[4])
+        assertEquals(MediaAudioBuffer.MOST_STABLE_MILLIS, MediaAudioBuffer.wiredPresets.last())
+    }
+
+    @Test
+    fun `wireless keeps the classic presets`() {
+        assertEquals(listOf(300, 500, 1000), MediaAudioBuffer.wirelessPresets)
+        assertEquals(MediaAudioBuffer.DEFAULT_MILLIS, MediaAudioBuffer.sanitizeWireless(50))
+        assertEquals(MediaAudioBuffer.DEFAULT_MILLIS, MediaAudioBuffer.sanitizeWireless(400))
+        assertEquals(50, MediaAudioBuffer.sanitizeWired(50))
     }
 
     @Test
     fun `delays saved by earlier versions stay selected`() {
-        for (millis in listOf(300, 500, 1000)) assertEquals(millis, MediaAudioBuffer.sanitize(millis))
+        for (millis in listOf(300, 500, 1000)) {
+            assertEquals(millis, MediaAudioBuffer.sanitize(millis))
+            assertEquals(millis, MediaAudioBuffer.sanitizeWireless(millis))
+            assertEquals(millis, MediaAudioBuffer.sanitizeWired(millis))
+        }
     }
 
     @Test

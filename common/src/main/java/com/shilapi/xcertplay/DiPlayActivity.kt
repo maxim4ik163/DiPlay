@@ -2001,18 +2001,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             getString(R.string.audio_routing), R.drawable.ic_dp_audio) { card ->
             mediaChannelControl(card)
             navigationChannelControl(card)
-            val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets
-            val bufferLabels = bufferPresets.map { millis ->
-                when (millis) {
-                    com.shilapi.xcertplay.media.MediaAudioBuffer.DEFAULT_MILLIS -> getString(R.string.s_300_ms_default)
-                    com.shilapi.xcertplay.media.MediaAudioBuffer.MOST_STABLE_MILLIS -> getString(R.string.s_1000_ms_most_stable)
-                    else -> getString(R.string.settings_music_buffer_ms, millis)
-                }
-            }
-            choice(card, getString(R.string.music_buffer), bufferLabels,
-                bufferPresets.indexOf(AirPlayPersistence.loadMediaBufferMillis(this)).coerceAtLeast(0)) {
-                AirPlayPersistence.saveMediaBufferMillis(this, bufferPresets[it])
-            }
+            musicBufferChoice(card, wireless = true)
+            musicBufferChoice(card, wireless = false)
         }
         filteredSection(content, SettingsSection.NAVIGATION_WHEEL,
             getString(R.string.settings_navigation_wheel_volume), R.drawable.ic_dp_audio) { card ->
@@ -5725,6 +5715,26 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     // [announcesReconnect] labels a choice whose [save] reconnects by itself.
+    /** Music buffer for one transport. A change reconnects only a running session of that transport. */
+    private fun musicBufferChoice(card: LinearLayout, wireless: Boolean) {
+        val buffer = com.shilapi.xcertplay.media.MediaAudioBuffer
+        val presets = if (wireless) buffer.wirelessPresets else buffer.wiredPresets
+        val labels = presets.map { millis ->
+            when (millis) {
+                buffer.DEFAULT_MILLIS -> getString(R.string.s_300_ms_default)
+                buffer.MOST_STABLE_MILLIS -> getString(R.string.s_1000_ms_most_stable)
+                else -> getString(R.string.settings_music_buffer_ms, millis)
+            }
+        }
+        val title = getString(if (wireless) R.string.settings_music_buffer_wireless else R.string.settings_music_buffer_wired)
+        val sessionTransport = AirPlayPersistence.loadWirelessEnabled(this) == wireless
+        choice(card, title, labels,
+            presets.indexOf(AirPlayPersistence.loadMediaBufferMillis(this, wireless)).coerceAtLeast(0),
+            reconnects = sessionTransport) {
+            AirPlayPersistence.saveMediaBufferMillis(this, wireless, presets[it])
+        }
+    }
+
     private fun choice(parent: LinearLayout, title: String, options: List<String>, current: Int, reconnects: Boolean = true,
         announcesReconnect: Boolean = reconnects, enabled: Boolean = true, save: (Int) -> Unit) {
         var selection = current
