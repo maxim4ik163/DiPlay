@@ -528,7 +528,8 @@ class AndroidMediaSink(
             val uplink = microphoneUplinks.computeIfAbsent(id) {
                 MicrophoneUplink(config, onAudioDiagnostic,
                     speakerphoneCall = speakerphoneCall,
-                    echoReference = if (config.audioType == TELEPHONY_AUDIO_TYPE) callEchoReferences[id] else null)
+                    echoReference = if (config.audioType == TELEPHONY_AUDIO_TYPE) callEchoReferences[id] else null,
+                    audioState = ::microphoneAudioState)
             }
             if (!uplink.start()) {
                 microphoneUplinks.remove(id, uplink)
@@ -539,6 +540,21 @@ class AndroidMediaSink(
             MicrophoneCaptureStats.reportStartFailure(config, error, onAudioDiagnostic)
             onMicrophoneStopped(id)
         }
+    }
+
+    /** Audio mode and every active recorder, so a stalled microphone report shows who holds the input. */
+    private fun microphoneAudioState(): String {
+        val manager = audioManager ?: return "audioState=unavailable"
+        val recorders = runCatching {
+            manager.activeRecordingConfigurations.joinToString(",") { recording ->
+                val device = runCatching { recording.audioDevice?.type?.toString() }.getOrNull() ?: "none"
+                val silenced = if (Build.VERSION.SDK_INT >= 29) " silenced=${recording.isClientSilenced}" else ""
+                "{source=${recording.clientAudioSource} session=${recording.clientAudioSessionId} " +
+                    "rate=${recording.format.sampleRate} device=$device$silenced}"
+            }
+        }.getOrElse { "error:${it.javaClass.simpleName}" }
+        return "mode=${runCatching { manager.mode }.getOrNull()} micMute=${runCatching { manager.isMicrophoneMute }.getOrNull()} " +
+            "sco=${runCatching { manager.isBluetoothScoOn }.getOrNull()} recorders=[$recorders]"
     }
 
     override fun onMicrophoneStopped(id: AudioStreamId) {

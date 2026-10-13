@@ -34,6 +34,8 @@ internal class MicrophoneUplink(
     private val echoCancellerFactory: (Int, Int, Int) -> CallEchoCanceller? = { frame, rate, tail ->
         SpeexEchoCanceller.create(frame, rate, tail)
     },
+    /** Describes the platform audio state for a stall report: audio mode and the other active recorders. */
+    private val audioState: () -> String = { "" },
     private val opusEncoderFactory: (Int) -> MicrophoneOpusEncoder? = { bitrate ->
         MicrophoneOpusEncoders.create(
             bitrate = bitrate,
@@ -279,6 +281,10 @@ internal class MicrophoneUplink(
         val reference = canceller?.let { ShortArray(it.frameSamples) }
         var filled = 0
         var readRestarts = 0
+        val stallDetector = MicrophoneStallDetector(config.sampleRate, config.channels)
+        var stallRecoveries = 0
+        // Start the first window now, so a first read that blocks for seconds already counts.
+        stallDetector.onRead(0, System.nanoTime())
         try {
             while (running.get()) {
                 stats.reading()
@@ -301,6 +307,28 @@ internal class MicrophoneUplink(
                         continue
                     }
                     return
+                }
+                val stall = stallDetector.onRead(count, System.nanoTime())
+                if (stall != null && running.get() && stallRecoveries <= MAX_STALL_RECOVERIES) {
+                    // A recorder that runs but delivers almost nothing leaves the far end hearing
+                    // silence for the whole call. Report who else records, then restart capture.
+                    val state = runCatching { audioState() }.getOrDefault("")
+                    val retry = stallRecoveries < MAX_STALL_RECOVERIES
+                    reportStall("Microphone: stalled type=${config.audioType} wallMs=${stall.wallMillis} " +
+                        "capturedMs=${stall.capturedMillis} recovery=${if (retry) stallRecoveries + 1 else "none"}" +
+                        (if (state.isBlank()) "" else " $state"))
+                    if (!retry) stallRecoveries++ // reported once; capture continues as it is
+                    if (retry) {
+                        stallRecoveries++
+                        val restarted = restartRecording(recorder)
+                        reportStall("Microphone: stall recovery type=${config.audioType} attempt=$stallRecoveries " +
+                            "restarted=$restarted")
+                        stallDetector.reset()
+                        stallDetector.onRead(0, System.nanoTime())
+                        filled = 0
+                        if (!restarted) return
+                        continue
+                    }
                 }
                 if (count == 0) {
                     stats.flush(routeType = routeInfo)
@@ -347,6 +375,11 @@ internal class MicrophoneUplink(
             running.set(false)
             release()
         }
+    }
+
+    private fun reportStall(message: String) {
+        Log.w(TAG, message)
+        runCatching { onDiagnostic(message) }
     }
 
     private fun restartRecording(recorder: AudioRecord): Boolean = try {
@@ -486,6 +519,7 @@ internal class MicrophoneUplink(
         const val ECHO_TAIL_MILLIS = 250
         const val ECHO_REFERENCE_LEAD_NS = 30_000_000L
         const val MAX_READ_RESTARTS = 3
+        const val MAX_STALL_RECOVERIES = 2
         const val READ_RESTART_PAUSE_MILLIS = 50L
     }
 }
