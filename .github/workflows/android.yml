@@ -23,7 +23,14 @@ jobs:
           packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and source-only debug build
-        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace
+        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace --continue 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+        shell: bash
+      - name: Report failures as annotations
+        if: failure()
+        shell: bash
+        run: |
+          grep -E "FAILED|e: |Error:|error:|Lint found|What went wrong" -A3 build.log | grep -v '^--$' | head -60 | while IFS= read -r l; do echo "::warning::${l//%/%25}"; done
+          for f in $(grep -rl "<failure" --include=*.xml */build/test-results samples/*/build/test-results 2>/dev/null | head -10); do python3 -c "import sys,xml.etree.ElementTree as E;[print('::error::'+c.get('classname')+'.'+c.get('name')+' :: '+(c.find('failure').get('message') or '')[:400].replace('\n',' ')) for c in E.parse(sys.argv[1]).iter('testcase') if c.find('failure') is not None]" $f; done
       - name: Test reports
         if: always()
         uses: actions/upload-artifact@v4
