@@ -47,7 +47,7 @@ jobs:
         run: |
           ./gradlew :mobile:assembleRelease --stacktrace
           mkdir -p out
-          cp mobile/build/outputs/apk/release/mobile-release.apk "out/DiPlay-${SRC_SHA}-buffer-theme-micstall-opus-hotspot-wirelessonly.apk"
+          cp mobile/build/outputs/apk/release/mobile-release.apk "out/DiPlay-${SRC_SHA}-buffer-theme-micstall-opus-hotspot-narrowexempt.apk"
       - name: Attach the APK to a draft release
         env:
           GH_TOKEN: ${{ github.token }}
