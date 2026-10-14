@@ -81,7 +81,7 @@ class CarHotspotSetupTest {
         assertFalse(eligible())
         configureHotspot()
         assertTrue(eligible())
-        assertFalse(CarHotspotSetup.shouldStartOnLaunch(context, hasSession = true))
+        assertFalse(CarHotspotSetup.shouldStartOnLaunch(context, hasSession = true, wireless = true))
         AirPlayPersistence.saveManualHotspotPassphrase(context, "short")
         assertFalse(eligible())
     }
@@ -90,9 +90,25 @@ class CarHotspotSetupTest {
         configureHotspot()
         CarHotspotSettings.setEnabled(context, true)
         AirPlayPersistence.saveWirelessEnabled(context, false)
-        assertFalse(eligible())
+        assertFalse(CarHotspotSetup.shouldStartOnLaunch(context, hasSession = false, wireless = false))
         assertFalse(CarHotspotSettings.shouldEnable(context, false, WirelessHotspotMode.MANUAL))
         assertTrue(CarHotspotSettings.enabled(context))
+    }
+
+    @Test fun aUsbLaunchLeavesTheHotspotOffEvenAfterAWirelessSession() {
+        // A dash camera can use the head unit's Wi-Fi while CarPlay runs over USB.
+        configureHotspot()
+        CarHotspotSettings.setEnabled(context, true)
+        AirPlayPersistence.saveWirelessEnabled(context, true)
+        assertFalse(CarHotspotSetup.shouldStartOnLaunch(context, hasSession = false, wireless = false))
+        assertTrue(CarHotspotSetup.shouldStartOnLaunch(context, hasSession = false, wireless = true))
+    }
+
+    @Test fun aWirelessLaunchPreparesTheHotspotEvenAfterAUsbSession() {
+        configureHotspot()
+        CarHotspotSettings.setEnabled(context, true)
+        AirPlayPersistence.saveWirelessEnabled(context, false)
+        assertTrue(CarHotspotSetup.shouldStartOnLaunch(context, hasSession = false, wireless = true))
     }
 
     @Test fun wifiDirectAndLocalOnlyHotspotAreNotAutomaticallyManaged() {
@@ -114,7 +130,7 @@ class CarHotspotSetupTest {
         assertEquals(WirelessHotspotMode.MANUAL, AirPlayPersistence.loadWirelessHotspotMode(context))
     }
 
-    private fun eligible() = CarHotspotSetup.shouldStartOnLaunch(context, hasSession = false)
+    private fun eligible() = CarHotspotSetup.shouldStartOnLaunch(context, hasSession = false, wireless = true)
 
     private fun installPackage(name: String, system: Boolean) {
         shadowOf(context.packageManager).installPackage(PackageInfo().apply {
