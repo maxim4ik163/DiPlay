@@ -48,9 +48,14 @@ internal object CarHotspotSetup {
             access
         }
 
-    fun shouldStartOnLaunch(context: Context, hasSession: Boolean): Boolean =
+    /**
+     * [wireless] is the connection this launch starts: the hotspot is prepared only when DiPlay is about
+     * to start wireless CarPlay, never because the last session happened to be wireless. A driver who
+     * picks wireless later gets the hotspot from the wireless startup itself.
+     */
+    fun shouldStartOnLaunch(context: Context, hasSession: Boolean, wireless: Boolean): Boolean =
         !hasSession && CarHotspotSettings.shouldEnable(context,
-            AirPlayPersistence.loadWirelessEnabled(context), AirPlayPersistence.loadWirelessHotspotMode(context)) &&
+            wireless, AirPlayPersistence.loadWirelessHotspotMode(context)) &&
             ManualHotspotValidation.error(AirPlayPersistence.loadManualHotspotSsid(context),
                 AirPlayPersistence.loadManualHotspotPassphrase(context)) == null
 }
