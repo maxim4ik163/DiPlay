@@ -398,7 +398,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         if (consumeBluetoothAutoConnectIntent(intent)) {
             if (initialLaunch) {
                 initialLaunch = false
-                startCarHotspotForWirelessLaunch()
+                startCarHotspotOnLaunch()
             }
             handler.post { connect(true) }
         }
@@ -425,7 +425,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         if (consumeBluetoothAutoConnectIntent(intent)) {
             if (initialLaunch) {
                 initialLaunch = false
-                startCarHotspotForWirelessLaunch()
+                startCarHotspotOnLaunch()
             }
             handler.post { connect(true) }
         }
@@ -512,14 +512,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         pausedForAdbSwitchChange = false
         if (initialLaunch) {
             initialLaunch = false
-            val connectsOnLaunch = setupError == null && !CarPlayBackgroundSession.hasSession() &&
-                DiPlayPreferences.autoConnect(this) && intent.getStringExtra("page") == null && page != "setup"
-            val wireless = connectsOnLaunch && DiPlayPreferences.autoConnectWireless(this)
-            // Only a launch that starts wireless CarPlay turns the car hotspot on: with USB chosen, the
-            // driver may be using the head unit's Wi-Fi for something else, such as a dash camera.
-            if (wireless) startCarHotspotForWirelessLaunch()
-            if (connectsOnLaunch) {
-                handler.post { connect(wireless) }
+            startCarHotspotOnLaunch()
+            if (setupError == null && !CarPlayBackgroundSession.hasSession() &&
+                DiPlayPreferences.autoConnect(this) && intent.getStringExtra("page") == null && page != "setup") {
+                handler.post { connect(DiPlayPreferences.autoConnectWireless(this)) }
             }
         }
     }
@@ -2843,8 +2839,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private fun vehicleAdbWorkInProgress(): Boolean =
         adbCheckInProgress || vehicleProbeAuthorizationInProgress || vehicleProbeInProgress
 
-    /** Called only by a launch that starts wireless CarPlay. */
-    private fun startCarHotspotForWirelessLaunch() {
+    private fun startCarHotspotOnLaunch() {
         if (!startupHotspotEligible()) return
         val app = applicationContext
         Thread({
@@ -2861,7 +2856,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun startupHotspotEligible(): Boolean =
-        CarHotspotSetup.shouldStartOnLaunch(applicationContext, CarPlayBackgroundSession.hasSession(), wireless = true)
+        CarHotspotSetup.shouldStartOnLaunch(applicationContext, CarPlayBackgroundSession.hasSession())
 
     private fun hotspotResultText(result: CarHotspotTethering.Result): String = getString(when (result) {
         CarHotspotTethering.Result.READY -> R.string.hotspot_control_on
